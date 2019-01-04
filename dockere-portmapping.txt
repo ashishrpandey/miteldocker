@@ -1,0 +1,172 @@
+ Exercise: Exposing Container Ports to the Host
+
+1. Create a container from the 'centos:6' base image on your system. This container does not need to be name but should be run in daemon mode, interactive and connected to the current terminal. Finally, it should start the bash shell on start up
+2. Using the appropriate Docker inspection command, find the IP address and name for the running container. Once you have the IP, ping the IP to be sure it is running. Finally, attach to the running container so you are logged into the shell.
+3. From within the container, install the Open-SSH server and make sure the service is running. From another terminal, try to log into the container over SSH by IP and note the result.
+4. Exit and stop the container. Remove the container from the list of previously run containers once you obtain the name from the appropriate Docker command.
+5. Create another container, name this container 'test_ssh'. When creating the container, it should be run in interactive mode and attached to the current terminal running the bash shell. Finally, expose port 22 on the container to port 8022 on the host system. Once logged in, install the Open-SSH server and make sure the service is running. Find the IP address of the container and note it.
+6. Install the 'sudo' utility. Add a user called 'test' and set a password for that user. Add the 'test' user to the 'sudoers' file. From another terminal window, attempt to log into the container via SSH on port 8022 as the 'test' user and confirm access.
+	
+
+1. Create a container from the 'centos:6' base image on your system. This container does not need to be name but should be run in daemon mode, interactive and connected to the current terminal. Finally, it should start the bash shell on start up.
+[user@zekeLabs ~]$ docker run -itd docker.io/centos:6 /bin/bash
+99f87625ff34a5a25af8edd7e95ad9b6a4bc70db63c2ac6e0850dd4cfae58cef
+[user@zekeLabs ~]$ docker ps
+CONTAINER ID        IMAGE                COMMAND             CREATED             STATUS              PORTS               NAMES
+99f87625ff34        docker.io/centos:6   "/bin/bash"         3 seconds ago       Up 2 seconds                            elegant_bohr        
+[user@zekeLabs ~]$ docker ps
+CONTAINER ID        IMAGE                COMMAND             CREATED             STATUS              PORTS               NAMES
+99f87625ff34        docker.io/centos:6   "/bin/bash"         5 seconds ago       Up 5 seconds                            elegant_bohr
+ 
+2. Using the appropriate Docker inspection command, find the IP address and name for the running container. Once you have the IP, ping the IP to be sure it is running. Finally, attach to the running container so you are logged into the shell.
+[user@zekeLabs ~]$ docker ps
+CONTAINER ID        IMAGE                COMMAND             CREATED             STATUS              PORTS               NAMES
+99f87625ff34        docker.io/centos:6   "/bin/bash"         7 minutes ago       Up 7 minutes                            elegant_bohr        
+[user@zekeLabs]$ docker inspect elegant_bohr | grep IP
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "IPAddress": "172.17.0.2",
+        "IPPrefixLen": 16,
+        "IPv6Gateway": "",
+        "LinkLocalIPv6Address": "",
+        "LinkLocalIPv6PrefixLen": 0,
+        "SecondaryIPAddresses": null,
+        "SecondaryIPv6Addresses": null
+[user@zekeLabs ~]$ ping 172.17.0.2
+PING 172.17.0.2 (172.17.0.2) 56(84) bytes of data.
+64 bytes from 172.17.0.2: icmp_seq=1 ttl=64 time=0.069 ms
+64 bytes from 172.17.0.2: icmp_seq=2 ttl=64 time=0.096 ms
+^C
+--- 172.17.0.2 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 999ms
+rtt min/avg/max/mdev = 0.069/0.082/0.096/0.016 ms
+[user@zekeLabs ~]$ docker attach elegant_bohr
+[root@99f87625ff34 /]#
+ 
+3. From within the container, install the Open-SSH server and make sure the service is running. From another terminal, try to log into the container over SSH by IP and note the result.
+[root@99f87625ff34 /]# yum install openssh-server
+... Lots of Output Here
+Installed:
+  openssh-server.x86_64 0:5.3p1-112.el6_7                                                                                      
+ 
+Dependency Installed:
+  fipscheck.x86_64 0:1.2.0-7.el6              fipscheck-lib.x86_64 0:1.2.0-7.el6       openssh.x86_64 0:5.3p1-112.el6_7      
+  tcp_wrappers-libs.x86_64 0:7.6-57.el6      
+ 
+Complete!
+[root@99f87625ff34 /]# service sshd start
+Generating SSH2 RSA host key:                              [  OK  ]
+Generating SSH1 RSA host key:                              [  OK  ]
+Generating SSH2 DSA host key:                              [  OK  ]
+Starting sshd:
+(Different Terminal)
+[user@zekeLabs ~]$ ssh test@172.17.0.2
+ssh: connect to host 172.17.0.2 port 22: Connection refused
+ 
+4. Exit and stop the container. Remove the container from the list of previously run containers once you obtain the name from the appropriate Docker command.
+[user@zekeLabs ~]$ docker ps -a
+CONTAINER ID        IMAGE                COMMAND             CREATED             STATUS                         PORTS               NAMES
+99f87625ff34        docker.io/centos:6   "/bin/bash"         About an hour ago   Exited (0) 4 seconds ago                           elegant_bohr        
+8ef073d5c7f4        docker.io/centos:6   "/bin/bash"         About an hour ago   Exited (0) About an hour ago                       silly_poincare      
+[user@zekeLabs ~]$ docker rm elegant_bohr
+elegant_bohr
+[user@zekeLabs ~]$ docker rm silly_poincare
+silly_poincare
+[user@zekeLabs ~]$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+docker.io/ubuntu    latest              91e54dfb1179        4 days ago          188.3 MB
+docker.io/centos    6                   a005304e4e74        9 weeks ago         203.1 MB
+[user@zekeLabs ~]$
+ 
+5. Create another container, name this container 'test_ssh'. When creating the container, it should be run in interactive mode and attached to the current terminal running the bash shell. Finally, expose port 22 on the container to port 8022 on the host system. Once logged in, install the Open-SSH server and make sure the service is running. Find the IP address of the container and note it.
+[user@zekeLabs ~]$ docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[user@zekeLabs ~]$ docker ps -a
+CONTAINER ID        IMAGE                COMMAND             CREATED             STATUS                         PORTS               NAMES
+99f87625ff34        docker.io/centos:6   "/bin/bash"         About an hour ago   Exited (0) 4 seconds ago                           elegant_bohr        
+8ef073d5c7f4        docker.io/centos:6   "/bin/bash"         About an hour ago   Exited (0) About an hour ago                       silly_poincare      
+[user@zekeLabs ~]$ docker rm elegant_bohr
+elegant_bohr
+[user@zekeLabs ~]$ docker rm silly_poincare
+silly_poincare
+[user@zekeLabs ~]$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+docker.io/ubuntu    latest              91e54dfb1179        4 days ago          188.3 MB
+docker.io/centos    6                   a005304e4e74        9 weeks ago         203.1 MB
+[user@zekeLabs ~]$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+docker.io/ubuntu    latest              91e54dfb1179        4 days ago          188.3 MB
+docker.io/centos    6                   a005304e4e74        9 weeks ago         203.1 MB
+[user@zekeLabs ~]$ docker run -it --name="test_ssh" -p 8022:22 docker.io/centos:6 /bin/bash
+Usage of loopback devices is strongly discouraged for production use. Either use `--storage-opt dm.thinpooldev` or use `--storage-opt dm.no_warn_on_loop_devices=true` to suppress this warning.
+[root@de1119934beb /]# yum install openssh-server
+Loaded plugins: fastestmirror
+Setting up Install Process
+
+  openssh-server.x86_64 0:5.3p1-112.el6_7                                                                                      
+ 
+Dependency Installed:
+  fipscheck.x86_64 0:1.2.0-7.el6              fipscheck-lib.x86_64 0:1.2.0-7.el6       openssh.x86_64 0:5.3p1-112.el6_7      
+  tcp_wrappers-libs.x86_64 0:7.6-57.el6      
+ 
+Complete!
+[root@de1119934beb /]# service sshd start
+Generating SSH2 RSA host key:                              [  OK  ]
+Generating SSH1 RSA host key:                              [  OK  ]
+Generating SSH2 DSA host key:                              [  OK  ]
+Starting sshd:                                             [  OK  ]
+[root@de1119934beb /]# ifconfig
+eth0      Link encap:Ethernet  HWaddr 02:42:AC:11:00:03  
+          inet addr:172.17.0.3  Bcast:0.0.0.0  Mask:255.255.0.0
+          inet6 addr: fe80::42:acff:fe11:3/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:3944 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:2104 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:7151212 (6.8 MiB)  TX bytes:116622 (113.8 KiB)
+ 
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)
+[root@de1119934beb /]#
+ 
+6. Install the 'sudo' utility. Add a user called 'test' and set a password for that user. Add the 'test' user to the 'sudoers' file. From another terminal window, attempt to log into the container via SSH on port 8022 as the 'test' user and confirm access.
+[root@de1119934beb /]# yum install sudo 
+Loaded plugins: fastestmirror
+Setting up Install Process
+------------............
+
+Downloading Packages:
+sudo-1.8.6p3-20.el6_7.x86_64.rpm                                                                        | 707 kB     00:02     
+Running rpm_check_debug
+Running Transaction Test
+Transaction Test Succeeded
+Running Transaction
+  Installing : sudo-1.8.6p3-20.el6_7.x86_64                                                                                1/1 
+  Verifying  : sudo-1.8.6p3-20.el6_7.x86_64                                                                                1/1 
+ 
+Installed:
+  sudo.x86_64 0:1.8.6p3-20.el6_7                                                                                               
+ 
+Complete!
+[root@de1119934beb /]# adduser test
+[root@de1119934beb /]# passwd test
+Changing password for user test.
+New password: 
+BAD PASSWORD: it is based on a dictionary word
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+[root@de1119934beb /]#
+(Other Terminal Window)
+[user@zekeLabs ~]$ ssh test@172.17.0.3
+The authenticity of host '172.17.0.3 (172.17.0.3)' can't be established.
+RSA key fingerprint is e8:5e:28:d8:64:1f:81:3a:d9:4c:2c:0c:8e:a1:27:b7.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '172.17.0.3' (RSA) to the list of known hosts.
+test@172.17.0.3's password: 
+[test@de1119934beb ~]$
